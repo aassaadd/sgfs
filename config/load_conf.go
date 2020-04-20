@@ -17,7 +17,8 @@ var GlobalConfig = struct {
 
 	// File Operating Port
 	OperationPort string `mapstructure:"operation_port"`
-
+	// Login Operating Port
+	LoginPort string `mapstructure:"login_port"`
 	// File Visit port
 	VisitPort string `mapstructure:"visit_port"`
 
@@ -50,4 +51,5 @@ func LoadConf() {
 
 	GlobalConfig.OperationPort = ":" + GlobalConfig.OperationPort
 	GlobalConfig.VisitPort = ":" + GlobalConfig.VisitPort
+	GlobalConfig.LoginPort = ":" + GlobalConfig.LoginPort
 }

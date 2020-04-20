@@ -26,6 +26,7 @@ func main() {
 	startStaticFileServer()
 
 	startOperationServer()
+	startLoginServer()
 }
 
 func startStaticFileServer() {
@@ -65,6 +66,25 @@ func startOperationServer() {
 	}
 
 	if err := fastServer.ListenAndServe(config.GlobalConfig.OperationPort); err != nil {
+		panic(err)
+	}
+}
+func startLoginServer() {
+	router := fasthttprouter.New()
+
+	// Add panic handler
+	router.PanicHandler = func(ctx *fasthttp.RequestCtx, err interface{}) {
+		zap.S().Error(err)
+		service.SendResponse(ctx, -1, "Unexpected error", err)
+	}
+	router.POST("/login", service.LoginHandler)
+
+	fastServer := &fasthttp.Server{
+		Handler:            router.Handler,
+		MaxRequestBodySize: config.GlobalConfig.MaxRequestBodySize,
+	}
+
+	if err := fastServer.ListenAndServe(config.GlobalConfig.LoginPort); err != nil {
 		panic(err)
 	}
 }
