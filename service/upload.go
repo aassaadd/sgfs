@@ -1,17 +1,29 @@
 package service
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
 	"github.com/LinkinStars/golang-util/gu"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 
-	"github.com/LinkinStars/sgfs/config"
-	"github.com/LinkinStars/sgfs/util/date_util"
+	"github.com/aassaadd/sgfs/config"
+	"github.com/aassaadd/sgfs/util/date_util"
 )
 
+// Strips 'Bearer ' prefix from bearer token string
+func stripBearerPrefixFromTokenString(tok string) (string, error) {
+	// Should be a bearer token
+	if len(tok) > 6 && strings.ToUpper(tok[0:7]) == "BEARER " {
+		return tok[7:], nil
+	}
+	return tok, nil
+}
+
+// UploadFileHandler 上传文件
 func UploadFileHandler(ctx *fasthttp.RequestCtx) {
 	// Get the file from the form
 	header, err := ctx.FormFile("file")
@@ -27,12 +39,28 @@ func UploadFileHandler(ctx *fasthttp.RequestCtx) {
 	}
 
 	// authentication
-	token := string(ctx.FormValue("token"))
-	if strings.Compare(token, config.GlobalConfig.OperationToken) != 0 {
+	// token := string(ctx.FormValue("token"))
+	// if strings.Compare(token, config.GlobalConfig.OperationToken) != 0 {
+	// 	SendResponse(ctx, -1, "Token error.", nil)
+	// 	return
+	// }
+	buf := ctx.Request.Header.Peek("Authorization")
+	tokenString, err := stripBearerPrefixFromTokenString(string(buf))
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			SendResponse(ctx, -1, "not authorization.", nil)
+			return nil, fmt.Errorf("not authorization")
+		}
+		return []byte(config.GlobalConfig.OperationToken), nil
+	})
+	if err != nil {
+		SendResponse(ctx, -1, "not token.", nil)
+		return
+	}
+	if !token.Valid {
 		SendResponse(ctx, -1, "Token error.", nil)
 		return
 	}
-
 	// Check upload File Path
 	uploadSubPath := string(ctx.FormValue("uploadSubPath"))
 
