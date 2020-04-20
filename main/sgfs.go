@@ -55,6 +55,7 @@ func startOperationServer() {
 		zap.S().Error(err)
 		service.SendResponse(ctx, -1, "Unexpected error", err)
 	}
+	router.POST("/login", service.LoginHandler)
 	router.POST("/upload-file", service.UploadFileHandler)
 	router.POST("/delete-file", service.DeleteFileHandler)
 
