@@ -19,6 +19,15 @@ type ResponseJson struct {
 }
 
 func SendResponse(ctx *fasthttp.RequestCtx, code int, message string, data interface{}) {
+	// ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+	// ctx.Response.Header.Add("Access-Control-Allow-Headers", "Content-Type Authorization Accept")
+	// ctx.Response.Header.Add("Access-Control-Allow-Headers", "Authorization")
+	// ctx.Response.Header.Add("Access-Control-Allow-Headers", "Accept")
+	// ctx.Response.Header.Add("Access-Control-Allow-Methods", "GET POST OPTIONS PUT DELETE")
+	// ctx.Response.Header.Add("Access-Control-Allow-Methods", "POST")
+	// ctx.Response.Header.Add("Access-Control-Allow-Methods", "OPTIONS")
+	// ctx.Response.Header.Add("Access-Control-Allow-Methods", "PUT")
+	// ctx.Response.Header.Add("Access-Control-Allow-Methods", "DELETE")
 	ctx.Response.Header.SetCanonical(strContentType, strApplicationJSON)
 	ctx.Response.SetStatusCode(fasthttp.StatusOK)
 

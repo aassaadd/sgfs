@@ -3,6 +3,7 @@ module github.com/aassaadd/sgfs
 go 1.13
 
 require (
+	github.com/AdhityaRamadhanus/fasthttpcors v0.0.0-20170121111917-d4c07198763a
 	github.com/LinkinStars/golang-util v0.0.0-20190921020251-eb46e91d713f
 	github.com/buaazp/fasthttprouter v0.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible

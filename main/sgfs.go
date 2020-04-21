@@ -11,6 +11,24 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+var (
+	corsAllowHeaders     = "authorization"
+	corsAllowMethods     = "HEAD,GET,POST,PUT,DELETE,OPTIONS"
+	corsAllowOrigin      = "*"
+	corsAllowCredentials = "true"
+)
+
+func CORS(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+
+		ctx.Response.Header.Set("Access-Control-Allow-Credentials", corsAllowCredentials)
+		ctx.Response.Header.Set("Access-Control-Allow-Headers", corsAllowHeaders)
+		ctx.Response.Header.Set("Access-Control-Allow-Methods", corsAllowMethods)
+		ctx.Response.Header.Set("Access-Control-Allow-Origin", corsAllowOrigin)
+
+		next(ctx)
+	}
+}
 func main() {
 	gu.InitEasyZapDefault("sgfs")
 
@@ -56,18 +74,19 @@ func startOperationServer() {
 		zap.S().Error(err)
 		service.SendResponse(ctx, -1, "Unexpected error", err)
 	}
-	router.POST("/login", service.LoginHandler)
+	// router.POST("/login", service.LoginHandler)
 	router.POST("/upload-file", service.UploadFileHandler)
 	router.POST("/delete-file", service.DeleteFileHandler)
 
 	fastServer := &fasthttp.Server{
-		Handler:            router.Handler,
+		Handler:            CORS(router.Handler),
 		MaxRequestBodySize: config.GlobalConfig.MaxRequestBodySize,
 	}
-
-	if err := fastServer.ListenAndServe(config.GlobalConfig.OperationPort); err != nil {
-		panic(err)
-	}
+	go func() {
+		if err := fastServer.ListenAndServe(config.GlobalConfig.OperationPort); err != nil {
+			panic(err)
+		}
+	}()
 }
 func startLoginServer() {
 	router := fasthttprouter.New()
