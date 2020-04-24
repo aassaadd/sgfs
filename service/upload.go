@@ -116,7 +116,10 @@ func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 			fileAllPath = dirPath + "/" + filename
 		}
 	}
-
+	ext := ctx.FormValue("ext")
+	if ext != nil {
+		fileAllPath = fileAllPath + "." + string(ext)
+	}
 	// 保存文件
 	reader := bufio.NewReaderSize(raw, 1024*32)
 	file, err := os.Create(fileAllPath)
@@ -250,7 +253,6 @@ func UploadFileHandler(ctx *fasthttp.RequestCtx) {
 		filename = createFileNameByName(string(upFileName), suffix)
 	}
 	fileAllPath := dirPath + "/" + filename
-
 	// Guarantee that the filename does not duplicate
 	if upFileName == nil {
 		for {
@@ -261,7 +263,10 @@ func UploadFileHandler(ctx *fasthttp.RequestCtx) {
 			fileAllPath = dirPath + "/" + filename
 		}
 	}
-
+	ext := ctx.FormValue("ext")
+	if ext != nil {
+		fileAllPath = fileAllPath + "." + string(ext)
+	}
 	// 保存文件
 	if err := fasthttp.SaveMultipartFile(header, fileAllPath); err != nil {
 		zap.S().Error(err)
