@@ -15,7 +15,8 @@ echo "build darwin"
 go build -o ./bin/darwin/sgfs ./main/sgfs.go
 
 echo "build linux"
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -installsuffix cgo  -o ./bin/linux/sgfs ./main/sgfs.go
+# CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -installsuffix cgo  -o ./bin/linux/sgfs ./main/sgfs.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -installsuffix cgo ./main/sgfs.go
 
 echo "build windows"
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./bin/windows/sgfs.exe ./main/sgfs.go

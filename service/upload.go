@@ -62,9 +62,14 @@ func UploadFileHandler(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	// Check upload File Path
+	upFileName := ctx.FormValue("upFileName")
+	upFilePath := ctx.FormValue("upFilePath")
 	uploadSubPath := string(ctx.FormValue("uploadSubPath"))
-
 	visitPath := "/" + uploadSubPath + "/" + date_util.GetCurTimeFormat(date_util.YYYYMMDD)
+	if upFilePath != nil {
+		// 如果规定了文件路径和文件
+		visitPath = "/" + uploadSubPath + "/" + string(upFilePath)
+	}
 
 	dirPath := config.GlobalConfig.UploadPath + visitPath
 	if err := gu.CreateDirIfNotExist(dirPath); err != nil {
@@ -76,16 +81,20 @@ func UploadFileHandler(ctx *fasthttp.RequestCtx) {
 	suffix := path.Ext(header.Filename)
 
 	filename := createFileName(suffix)
-
+	if upFileName != nil {
+		filename = createFileNameByName(string(upFileName), suffix)
+	}
 	fileAllPath := dirPath + "/" + filename
 
 	// Guarantee that the filename does not duplicate
-	for {
-		if !gu.CheckPathIfNotExist(fileAllPath) {
-			break
+	if upFileName == nil {
+		for {
+			if !gu.CheckPathIfNotExist(fileAllPath) {
+				break
+			}
+			filename = createFileName(suffix)
+			fileAllPath = dirPath + "/" + filename
 		}
-		filename = createFileName(suffix)
-		fileAllPath = dirPath + "/" + filename
 	}
 
 	// Save file
@@ -101,4 +110,8 @@ func UploadFileHandler(ctx *fasthttp.RequestCtx) {
 func createFileName(suffix string) string {
 	// Date and Time + _ + Random Number + File Suffix
 	return date_util.GetCurTimeFormat(date_util.YYYYMMddHHmmss) + "_" + gu.GenerateRandomNumber(10) + suffix
+}
+func createFileNameByName(fileName string, suffix string) string {
+	// Date and Time + _ + Random Number + File Suffix
+	return fileName + suffix
 }
