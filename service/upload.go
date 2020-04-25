@@ -99,7 +99,10 @@ func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 	}
 
 	suffix := path.Ext(dfileNmae)
-
+	ext := ctx.FormValue("ext")
+	if ext != nil {
+		suffix = "." + string(ext)
+	}
 	filename := createFileName(suffix)
 	if upFileName != nil {
 		filename = createFileNameByName(string(upFileName), suffix)
@@ -116,10 +119,6 @@ func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 			fileAllPath = dirPath + "/" + filename
 		}
 	}
-	ext := ctx.FormValue("ext")
-	if ext != nil {
-		fileAllPath = fileAllPath + "." + string(ext)
-	}
 	// 保存文件
 	reader := bufio.NewReaderSize(raw, 1024*32)
 	file, err := os.Create(fileAllPath)
@@ -129,6 +128,8 @@ func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 	writer := bufio.NewWriter(file)
 	buff := make([]byte, 32*1024)
 	written := 0
+	zap.S().Info(durl)
+	zap.S().Info(fileAllPath)
 	go func() {
 		for {
 			nr, er := reader.Read(buff)
@@ -165,7 +166,7 @@ func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 		select {
 		case <-ticker.C:
 			speed := written - lastWtn
-			zap.S().Info("[*] Speed %s / %s \n", bytesToSize(speed), spaceTime.String())
+			zap.S().Info(fmt.Sprintf("[*] Speed %s / %s \n", bytesToSize(speed), spaceTime.String()))
 			if written-lastWtn == 0 {
 				ticker.Stop()
 				stop = true
@@ -247,7 +248,10 @@ func UploadFileHandler(ctx *fasthttp.RequestCtx) {
 	}
 
 	suffix := path.Ext(header.Filename)
-
+	ext := ctx.FormValue("ext")
+	if ext != nil {
+		suffix = "." + string(ext)
+	}
 	filename := createFileName(suffix)
 	if upFileName != nil {
 		filename = createFileNameByName(string(upFileName), suffix)
@@ -262,10 +266,6 @@ func UploadFileHandler(ctx *fasthttp.RequestCtx) {
 			filename = createFileName(suffix)
 			fileAllPath = dirPath + "/" + filename
 		}
-	}
-	ext := ctx.FormValue("ext")
-	if ext != nil {
-		fileAllPath = fileAllPath + "." + string(ext)
 	}
 	// 保存文件
 	if err := fasthttp.SaveMultipartFile(header, fileAllPath); err != nil {
