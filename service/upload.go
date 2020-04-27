@@ -22,6 +22,36 @@ import (
 	"github.com/aassaadd/sgfs/util/date_util"
 )
 
+func copy(oldpath string, newpath string) {
+	//打开源文件
+	fileRead, err := os.Open(oldpath)
+	if err != nil {
+		zap.S().Error(err)
+		return
+	}
+	defer fileRead.Close()
+	//创建目标文件
+	fileWrite, err := os.Create(newpath)
+	if err != nil {
+		zap.S().Error(err)
+		return
+	}
+	defer fileWrite.Close()
+
+	//从源文件获取数据，放到缓冲区
+	buf := make([]byte, 4096)
+	//循环从源文件中获取数据，全部写到目标文件中
+	for {
+		n, err := fileRead.Read(buf)
+		if err != nil && err == io.EOF {
+			zap.S().Info(fmt.Sprintf("备份完毕，n = %d \n:", n))
+			return
+		}
+		fileWrite.Write(buf[:n]) //读多少、写多少
+	}
+
+}
+
 // Strips 'Bearer ' prefix from bearer token string
 func stripBearerPrefixFromTokenString(tok string) (string, error) {
 	// Should be a bearer token
@@ -34,6 +64,7 @@ func stripBearerPrefixFromTokenString(tok string) (string, error) {
 // UploadFileHandlerCopy 从其他url copy
 func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 	fileUrl := ctx.FormValue("fileUrl")
+	bak := ctx.FormValue("bak")
 	durl := string(fileUrl)
 	uri, err := url.ParseRequestURI(durl)
 	if err != nil {
@@ -119,6 +150,10 @@ func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 			fileAllPath = dirPath + "/" + filename
 		}
 	}
+	// 保存文件之前 先备份
+	if bak != nil {
+		copy(fileAllPath, fileAllPath+"."+createFileName(suffix))
+	}
 	// 保存文件
 	reader := bufio.NewReaderSize(raw, 1024*32)
 	file, err := os.Create(fileAllPath)
@@ -155,7 +190,7 @@ func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 			}
 		}
 		if err != nil {
-			panic(err)
+			zap.S().Error(err)
 		}
 	}()
 	spaceTime := time.Second * 1
