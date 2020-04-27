@@ -29,7 +29,9 @@ func CORS(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 		next(ctx)
 	}
 }
+
 func main() {
+
 	gu.InitEasyZapDefault("sgfs")
 
 	config.LoadConf()
@@ -45,6 +47,13 @@ func main() {
 
 	startOperationServer()
 	startLoginServer()
+	for {
+		// 这里做异步下载
+		select {
+		case f := <-service.SaveFile:
+			go service.UploadFileHandlerCopyByF(f)
+		}
+	}
 }
 
 func startStaticFileServer() {
@@ -102,8 +111,9 @@ func startLoginServer() {
 		Handler:            CORS(router.Handler),
 		MaxRequestBodySize: config.GlobalConfig.MaxRequestBodySize,
 	}
-
-	if err := fastServer.ListenAndServe(config.GlobalConfig.LoginPort); err != nil {
-		panic(err)
-	}
+	go func() {
+		if err := fastServer.ListenAndServe(config.GlobalConfig.LoginPort); err != nil {
+			panic(err)
+		}
+	}()
 }
