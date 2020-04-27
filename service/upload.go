@@ -222,7 +222,7 @@ func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 	return
 }
 
-// UploadFileHandler 上传文件
+// UploadFileHandler 上传文件 需要高延时
 func UploadFileHandler(ctx *fasthttp.RequestCtx) {
 	fileUrl := ctx.FormValue("fileUrl")
 	if fileUrl != nil {
