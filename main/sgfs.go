@@ -60,7 +60,7 @@ func startStaticFileServer() {
 	}
 
 	go func() {
-		if err := fasthttp.ListenAndServe(config.GlobalConfig.VisitPort, fs.NewRequestHandler()); err != nil {
+		if err := fasthttp.ListenAndServe(config.GlobalConfig.VisitPort, CORS(fs.NewRequestHandler())); err != nil {
 			panic(err)
 		}
 	}()
@@ -99,7 +99,7 @@ func startLoginServer() {
 	router.POST("/login", service.LoginHandler)
 
 	fastServer := &fasthttp.Server{
-		Handler:            router.Handler,
+		Handler:            CORS(router.Handler),
 		MaxRequestBodySize: config.GlobalConfig.MaxRequestBodySize,
 	}
 
