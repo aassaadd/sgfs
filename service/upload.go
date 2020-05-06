@@ -71,6 +71,21 @@ type AsyncSaveFile struct {
 	Bak         *string // 是否备份只要有数就行
 	Token       string  // token
 	Suffix      string  // 后缀
+	CallbackUrl *string // 回调地址
+}
+
+func cal(callbackUrl string) {
+	client := http.DefaultClient
+	resp, err := client.Get(callbackUrl)
+	if err != nil {
+		zap.S().Error(err)
+	}
+	if resp.ContentLength <= 0 {
+		zap.S().Error("No file was found.")
+	}
+	raw := resp.Body
+	zap.S().Info(raw)
+	defer raw.Close()
 }
 
 // UploadFileHandlerCopyByF 从其他url copy
@@ -78,6 +93,7 @@ func UploadFileHandlerCopyByF(ff AsyncSaveFile) {
 	bak := ff.Bak
 	durl := ff.Durl
 	client := http.DefaultClient
+	callbackUrl := ff.CallbackUrl
 	client.Timeout = time.Second * 60 //设置超时时间
 	resp, err := client.Get(durl)
 	if err != nil {
@@ -185,6 +201,10 @@ func UploadFileHandlerCopyByF(ff AsyncSaveFile) {
 	// 	zap.S().Error(err)
 	// 	SendResponse(ctx, -1, "Save file fail.", err.Error())
 	// }
+	// 如果有回调 更新回调
+	if callbackUrl != nil {
+		cal(*callbackUrl)
+	}
 	zap.S().Info("Save file success.")
 	zap.S().Info(ff.FileAllPath)
 	// SendResponse(ctx, 1, "Save file success.", visitPath+"/"+filename)
@@ -195,6 +215,7 @@ func UploadFileHandlerCopyByF(ff AsyncSaveFile) {
 func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 	fileUrl := ctx.FormValue("fileUrl")
 	bak := ctx.FormValue("bak")
+	callbackUrl := ctx.FormValue("callbackUrl")
 	durl := string(fileUrl)
 	uri, err := url.ParseRequestURI(durl)
 	if err != nil {
@@ -263,9 +284,13 @@ func UploadFileHandlerCopy(ctx *fasthttp.RequestCtx) {
 		Token:       string(buf),
 		Suffix:      suffix,
 	}
-	b := string(bak)
 	if bak != nil {
+		b := string(bak)
 		ff.Bak = &b
+	}
+	if callbackUrl != nil {
+		c := string(callbackUrl)
+		ff.CallbackUrl = &c
 	}
 	SaveFile <- ff
 	SendResponse(ctx, 1, "Save file success.", visitPath+"/"+filename)
